@@ -12,6 +12,7 @@ urlpatterns = [
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('manage/hosts/', views.host_list, name='host_list'),
     path('manage/events/', views.admin_event_list, name='admin_event_list'),
+    path('manage/events/<int:event_id>/delete/', views.delete_event, name='delete_event'),
     path('manage/approve/<int:user_id>/', views.approve_host, name='approve_host'),
     path('manage/reject/<int:user_id>/', views.reject_host, name='reject_host'),
     path('host-dashboard/', views.host_dashboard, name='host_dashboard'),

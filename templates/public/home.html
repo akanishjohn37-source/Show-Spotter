@@ -7,7 +7,14 @@
     <h1
         style="font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
         Discover Amazing Events</h1>
-    <p style="font-size: 1.2rem; color: var(--text-muted);">Book your seats for the best shows in town.</p>
+    <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2rem;">Book your seats for the best shows in
+        town.</p>
+
+    <form method="get" action="{% url 'home' %}" style="max-width: 500px; margin: 0 auto; display: flex; gap: 10px;">
+        <input type="text" name="q" placeholder="Search events..." value="{{ query|default:'' }}"
+            style="padding: 1rem; border-radius: 50px; border: 1px solid #444; background: var(--surface); flex-grow: 1; color: var(--text-main);">
+        <button type="submit" class="btn" style="border-radius: 50px; padding: 0 2rem;">Search</button>
+    </form>
 </div>
 
 {% if events %}

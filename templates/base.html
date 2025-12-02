@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,39 +9,41 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <nav class="navbar">
-        <div class="logo">Show Spotter</div>
+        <a href="{% url 'home' %}" class="logo" style="text-decoration: none; color: inherit;">Show Spotter</a>
         <div class="nav-links">
             {% if user.is_authenticated %}
-                {% if user.role == 'ADMIN' %}
-                    <a href="{% url 'admin_dashboard' %}">Dashboard</a>
-                {% elif user.role == 'HOST' %}
-                    <a href="{% url 'host_dashboard' %}">My Events</a>
-                    <a href="{% url 'create_event' %}">Create Event</a>
-                {% else %}
-                    <a href="{% url 'home' %}">Browse Events</a>
-                    <a href="{% url 'my_tickets' %}">My Tickets</a>
-                {% endif %}
-                <span class="user-greeting">Hi, {{ user.username }}</span>
-                <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-text">Logout</button>
-                </form>
+            {% if user.role == 'ADMIN' %}
+            <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+            {% elif user.role == 'HOST' %}
+            <a href="{% url 'host_dashboard' %}">My Events</a>
+            <a href="{% url 'create_event' %}">Create Event</a>
             {% else %}
-                <a href="{% url 'login' %}">Login</a>
-                <a href="{% url 'register' %}">Register</a>
+            <a href="{% url 'home' %}">Browse Events</a>
+            <a href="{% url 'my_tickets' %}">My Tickets</a>
+            {% endif %}
+            <span class="user-greeting">Hi, {{ user.username }}</span>
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-text">Logout</button>
+            </form>
+            {% else %}
+            <a href="{% url 'home' %}">Browse Events</a>
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
             {% endif %}
         </div>
     </nav>
 
     <main class="container">
         {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="alert {{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
         {% endif %}
         {% block content %}{% endblock %}
     </main>
@@ -49,4 +52,5 @@
         <p>&copy; 2024 Show Spotter. All rights reserved.</p>
     </footer>
 </body>
+
 </html>

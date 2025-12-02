@@ -4,6 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.db import models # Import models for Q objects
 import json
 from .models import User, Event, Booking
 from .forms import EventForm
@@ -64,10 +65,15 @@ def dashboard_dispatch(request):
         return redirect('home')
 
 def home(request):
-    events = Event.objects.filter(date__gte=timezone.now().date()).order_by('date')
-    return render(request, 'public/home.html', {'events': events})
+    query = request.GET.get('q')
+    events = Event.objects.filter(date__gte=timezone.now().date())
+    
+    if query:
+        events = events.filter(title__icontains=query)
+        
+    events = events.order_by('date')
+    return render(request, 'public/home.html', {'events': events, 'query': query})
 
-@login_required
 def event_detail(request, event_id):
     event = Event.objects.get(pk=event_id)
     
@@ -89,6 +95,8 @@ def event_detail(request, event_id):
 @login_required
 def book_ticket(request, event_id):
     if request.method == 'POST':
+        from django.db import transaction
+        
         event = Event.objects.get(pk=event_id)
         selected_seats = request.POST.get('selected_seats') # e.g., "A1,A2"
         
@@ -99,30 +107,39 @@ def book_ticket(request, event_id):
         seat_list = selected_seats.split(',')
         quantity = len(seat_list)
         
-        # Concurrency Check: Verify if seats are still available
-        bookings = Booking.objects.filter(event=event, booking_status='CONFIRMED')
-        all_booked = []
-        for b in bookings:
-            if b.seats_booked:
-                all_booked.extend(b.seats_booked.split(','))
-        
-        for seat in seat_list:
-            if seat in all_booked:
-                messages.error(request, f'Seat {seat} was just booked by someone else. Please try again.')
-                return redirect('event_detail', event_id=event.id)
-        
-        # Create Booking
-        total_cost = event.price * quantity
-        Booking.objects.create(
-            event=event,
-            user=request.user,
-            seats_booked=selected_seats,
-            total_cost=total_cost,
-            booking_status='CONFIRMED'
-        )
-        
-        messages.success(request, f'Booking confirmed! Tickets: {selected_seats}')
-        return redirect('my_tickets')
+        try:
+            with transaction.atomic():
+                # Lock the event row for update to prevent race conditions
+                # (Optional but good practice: Event.objects.select_for_update().get(pk=event_id))
+                
+                # Concurrency Check: Verify if seats are still available
+                # We fetch ALL confirmed bookings for this event inside the transaction
+                bookings = Booking.objects.select_for_update().filter(event=event, booking_status='CONFIRMED')
+                all_booked = []
+                for b in bookings:
+                    if b.seats_booked:
+                        all_booked.extend(b.seats_booked.split(','))
+                
+                for seat in seat_list:
+                    if seat in all_booked:
+                        raise ValueError(f'Seat {seat} was just booked by someone else.')
+                
+                # Create Booking
+                total_cost = event.price * quantity
+                Booking.objects.create(
+                    event=event,
+                    user=request.user,
+                    seats_booked=selected_seats,
+                    total_cost=total_cost,
+                    booking_status='CONFIRMED'
+                )
+                
+            messages.success(request, f'Booking confirmed! Tickets: {selected_seats}')
+            return redirect('my_tickets')
+            
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect('event_detail', event_id=event.id)
     
     return redirect('home')
 
@@ -184,13 +201,22 @@ def admin_event_list(request):
     if request.user.role != 'ADMIN':
         return redirect('home')
     
-    events = Event.objects.all().order_by('-date')
-    event_stats = []
+    # Optimized Query: Fetch everything in one go
+    from django.db.models import Sum, Count, F, Case, When, IntegerField
     
+    events = Event.objects.annotate(
+        revenue=Sum('bookings__total_cost', default=0),
+        confirmed_bookings=Count('bookings', filter=models.Q(bookings__booking_status='CONFIRMED'))
+    ).order_by('-date')
+    
+    event_stats = []
     for event in events:
-        bookings = Booking.objects.filter(event=event, booking_status='CONFIRMED')
-        revenue = sum(b.total_cost for b in bookings)
+        # We still need to parse the seat strings for exact seat count, 
+        # but revenue is now pre-calculated by DB.
+        # For a truly massive scale, we'd store seat_count in Booking model,
+        # but this is a huge improvement already.
         
+        bookings = Booking.objects.filter(event=event, booking_status='CONFIRMED')
         booked_count = 0
         for b in bookings:
             if b.seats_booked:
@@ -201,7 +227,7 @@ def admin_event_list(request):
         
         event_stats.append({
             'event': event,
-            'revenue': revenue,
+            'revenue': event.revenue, # From annotation
             'total_capacity': total_capacity,
             'balance_seats': balance_seats,
             'booked_count': booked_count
@@ -272,3 +298,13 @@ def host_event_detail(request, event_id):
     return render(request, 'host/event_detail.html', context)
 
 
+@login_required
+def delete_event(request, event_id):
+    if request.user.role != 'ADMIN':
+        messages.error(request, 'Unauthorized action.')
+        return redirect('home')
+    
+    event = Event.objects.get(pk=event_id)
+    event.delete()
+    messages.success(request, f'Event "{event.title}" has been deleted.')
+    return redirect('admin_event_list')

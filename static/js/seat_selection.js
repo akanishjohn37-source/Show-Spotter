@@ -1,10 +1,10 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const grid = document.getElementById('seat-grid');
     const selectedDisplay = document.getElementById('selected-seats-display');
     const costDisplay = document.getElementById('total-cost-display');
     const input = document.getElementById('selected_seats_input');
     const bookBtn = document.getElementById('book-btn');
-    
+
     let selectedSeats = [];
 
     // Generate Grid
@@ -45,12 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const total = selectedSeats.length * ticketPrice;
             costDisplay.textContent = `$${total.toFixed(2)}`;
             input.value = selectedSeats.join(',');
-            bookBtn.disabled = false;
+            if (bookBtn) bookBtn.disabled = false;
         } else {
             selectedDisplay.textContent = '-';
             costDisplay.textContent = '$0.00';
             input.value = '';
-            bookBtn.disabled = true;
+            if (bookBtn) bookBtn.disabled = true;
         }
     }
 });
