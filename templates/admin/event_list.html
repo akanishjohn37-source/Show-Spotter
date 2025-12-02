@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}All Events{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'admin_dashboard' %}" class="btn-text">&larr; Back to Dashboard</a>
+</div>
+
+<h1 style="margin-bottom: 2rem;">System Events Overview</h1>
+
+{% if event_stats %}
+<div style="overflow-x: auto;">
+    <table
+        style="width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden;">
+        <thead>
+            <tr style="background: #333; text-align: left;">
+                <th style="padding: 1rem;">Event Title</th>
+                <th style="padding: 1rem;">Host</th>
+                <th style="padding: 1rem;">Date</th>
+                <th style="padding: 1rem;">Total Revenue</th>
+                <th style="padding: 1rem;">Capacity</th>
+                <th style="padding: 1rem;">Booked</th>
+                <th style="padding: 1rem;">Available</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in event_stats %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 1rem; font-weight: bold;">{{ item.event.title }}</td>
+                <td style="padding: 1rem;">{{ item.event.host.username }}</td>
+                <td style="padding: 1rem;">{{ item.event.date }}</td>
+                <td style="padding: 1rem; color: var(--accent);">${{ item.revenue }}</td>
+                <td style="padding: 1rem;">{{ item.total_capacity }}</td>
+                <td style="padding: 1rem;">{{ item.booked_count }}</td>
+                <td style="padding: 1rem; font-weight: bold;">{{ item.balance_seats }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: var(--text-muted); font-size: 1.2rem;">No events found in the system.</p>
+</div>
+{% endif %}
+{% endblock %}

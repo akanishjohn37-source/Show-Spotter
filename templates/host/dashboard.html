@@ -21,7 +21,8 @@
         <p>{{ event.description|truncatewords:20 }}</p>
         <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: bold; color: var(--accent);">${{ event.price }}</span>
-            <span style="font-size: 0.9rem; color: var(--text-muted);">{{ event.total_capacity }} Seats</span>
+            <a href="{% url 'host_event_detail' event.id %}" class="btn"
+                style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">Manage & Analytics</a>
         </div>
     </div>
     {% endfor %}

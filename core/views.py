@@ -179,6 +179,35 @@ def reject_host(request, user_id):
     messages.success(request, f'Host {user.username} rejected and removed.')
     return redirect('host_list')
 
+@login_required
+def admin_event_list(request):
+    if request.user.role != 'ADMIN':
+        return redirect('home')
+    
+    events = Event.objects.all().order_by('-date')
+    event_stats = []
+    
+    for event in events:
+        bookings = Booking.objects.filter(event=event, booking_status='CONFIRMED')
+        revenue = sum(b.total_cost for b in bookings)
+        
+        booked_count = 0
+        for b in bookings:
+            if b.seats_booked:
+                booked_count += len(b.seats_booked.split(','))
+        
+        total_capacity = event.venue_rows * event.venue_cols
+        balance_seats = total_capacity - booked_count
+        
+        event_stats.append({
+            'event': event,
+            'revenue': revenue,
+            'total_capacity': total_capacity,
+            'balance_seats': balance_seats,
+            'booked_count': booked_count
+        })
+        
+    return render(request, 'admin/event_list.html', {'event_stats': event_stats})
 
 @login_required
 def host_dashboard(request):
@@ -209,4 +238,37 @@ def create_event(request):
         form = EventForm()
     
     return render(request, 'host/create_event.html', {'form': form})
+
+@login_required
+def host_event_detail(request, event_id):
+    event = Event.objects.get(pk=event_id)
+    if event.host != request.user:
+        messages.error(request, "You are not authorized to view this event.")
+        return redirect('host_dashboard')
+
+    bookings = Booking.objects.filter(event=event, booking_status='CONFIRMED')
+    
+    total_revenue = sum(b.total_cost for b in bookings)
+    
+    booked_seats = []
+    for b in bookings:
+        if b.seats_booked:
+            booked_seats.extend(b.seats_booked.split(','))
+            
+    seats_sold_count = len(booked_seats)
+    total_capacity = event.venue_rows * event.venue_cols
+    balance_seats = total_capacity - seats_sold_count
+    
+    context = {
+        'event': event,
+        'total_revenue': total_revenue,
+        'seats_sold_count': seats_sold_count,
+        'balance_seats': balance_seats,
+        'total_capacity': total_capacity,
+        'booked_seats': json.dumps(booked_seats),
+        'rows': range(1, event.venue_rows + 1),
+        'cols': range(1, event.venue_cols + 1),
+    }
+    return render(request, 'host/event_detail.html', context)
+
 
