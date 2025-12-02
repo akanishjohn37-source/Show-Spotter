@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Event{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 2rem auto;">
+    <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Create New Event</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="id_title">Event Title</label>
+            {{ form.title }}
+        </div>
+
+        <div class="form-group">
+            <label for="id_description">Description</label>
+            {{ form.description }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="id_date">Date</label>
+                {{ form.date }}
+            </div>
+            <div class="form-group">
+                <label for="id_time">Time</label>
+                {{ form.time }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_price">Price per Ticket ($)</label>
+            {{ form.price }}
+        </div>
+
+        <div class="form-group">
+            <label for="id_image_url">Image URL (Optional)</label>
+            {{ form.image_url }}
+        </div>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid #333; padding-bottom: 0.5rem;">
+            Seating Layout</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="id_venue_rows">Rows</label>
+                {{ form.venue_rows }}
+            </div>
+            <div class="form-group">
+                <label for="id_venue_cols">Columns</label>
+                {{ form.venue_cols }}
+            </div>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+            Total Capacity will be calculated as Rows × Columns.
+        </p>
+
+        <button type="submit" class="btn" style="width: 100%;">Create Event</button>
+    </form>
+</div>
+{% endblock %}

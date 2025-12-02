@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1
+        style="font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Discover Amazing Events</h1>
+    <p style="font-size: 1.2rem; color: var(--text-muted);">Book your seats for the best shows in town.</p>
+</div>
+
+{% if events %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+    {% for event in events %}
+    <div class="card" style="transition: transform 0.3s;">
+        {% if event.image_url %}
+        <img src="{{ event.image_url }}" alt="{{ event.title }}"
+            style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+        {% endif %}
+        <h3 style="margin-bottom: 0.5rem;">{{ event.title }}</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">{{ event.date|date:"M d, Y" }} • {{
+            event.time }}</p>
+        <p style="margin-bottom: 1.5rem;">{{ event.description|truncatewords:15 }}</p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; font-size: 1.2rem; color: var(--accent);">${{ event.price }}</span>
+            <a href="{% url 'event_detail' event.id %}" class="btn">View Details</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div style="text-align: center; padding: 4rem;">
+    <p style="font-size: 1.5rem; color: var(--text-muted);">No upcoming events found.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}My Tickets{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">My Bookings</h1>
+
+{% if bookings %}
+<div style="display: grid; gap: 1.5rem;">
+    {% for booking in bookings %}
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3 style="margin-bottom: 0.5rem;">{{ booking.event.title }}</h3>
+            <p style="color: var(--text-muted);">{{ booking.event.date|date:"M d, Y" }} at {{ booking.event.time }}</p>
+            <p style="margin-top: 0.5rem;">
+                <strong>Seats:</strong> <span style="color: var(--accent);">{{ booking.seats_booked }}</span>
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <p style="font-size: 1.2rem; font-weight: bold;">${{ booking.total_cost }}</p>
+            <span
+                style="background: rgba(0, 230, 118, 0.1); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--accent);">
+                {{ booking.booking_status }}
+            </span>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">ID: #{{ booking.id }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: var(--text-muted); font-size: 1.2rem;">You haven't booked any tickets yet.</p>
+    <a href="{% url 'home' %}" class="btn" style="margin-top: 1rem;">Browse Events</a>
+</div>
+{% endif %}
+{% endblock %}

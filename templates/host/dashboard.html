@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}My Events{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>My Events</h1>
+    <a href="{% url 'create_event' %}" class="btn">Create New Event</a>
+</div>
+
+{% if events %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    {% for event in events %}
+    <div class="card">
+        {% if event.image_url %}
+        <img src="{{ event.image_url }}" alt="{{ event.title }}"
+            style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+        {% endif %}
+        <h3>{{ event.title }}</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">{{ event.date }} at {{ event.time }}</p>
+        <p>{{ event.description|truncatewords:20 }}</p>
+        <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; color: var(--accent);">${{ event.price }}</span>
+            <span style="font-size: 0.9rem; color: var(--text-muted);">{{ event.total_capacity }} Seats</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: var(--text-muted); font-size: 1.2rem;">You haven't created any events yet.</p>
+    <a href="{% url 'create_event' %}" class="btn" style="margin-top: 1rem;">Create Your First Event</a>
+</div>
+{% endif %}
+{% endblock %}
