@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Pending Events{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Pending Events</h2>
+
+    {% if events %}
+    <div style="display: grid; gap: 1rem;">
+        {% for event in events %}
+        <div
+            style="border: 1px solid #333; padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="margin: 0 0 0.5rem 0;">{{ event.title }}</h3>
+                <p style="margin: 0; color: var(--text-muted);">Host: {{ event.host.username }} | Date: {{ event.date }}
+                </p>
+                <p style="margin: 0.5rem 0 0 0;">{{ event.description|truncatechars:100 }}</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'approve_event' event.id %}" class="btn" style="background: var(--success);">Approve</a>
+                <a href="{% url 'reject_event' event.id %}" class="btn" style="background: var(--danger);">Reject</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No pending events.</p>
+    {% endif %}
+
+    <div style="margin-top: 2rem;">
+        <a href="{% url 'admin_dashboard' %}" class="btn" style="background: var(--text-muted);">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

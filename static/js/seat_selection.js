@@ -5,46 +5,39 @@ document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('selected_seats_input');
     const bookBtn = document.getElementById('book-btn');
 
-    let selectedSeats = [];
+    let selectedSeatIds = [];
+    let selectedSeatLabels = [];
 
-    // Generate Grid
-    for (let r = 1; r <= venueRows; r++) {
-        for (let c = 1; c <= venueCols; c++) {
-            const seatId = `${String.fromCharCode(64 + r)}${c}`; // A1, A2, B1...
-            const seat = document.createElement('div');
-            seat.classList.add('seat');
-            seat.textContent = seatId;
-            seat.dataset.id = seatId;
-
-            if (bookedSeats.includes(seatId)) {
-                seat.classList.add('booked');
-                seat.title = "Already Booked";
-            } else {
-                seat.addEventListener('click', () => toggleSeat(seat));
-            }
-
-            grid.appendChild(seat);
+    // Attach listeners to existing seats
+    const seats = grid.querySelectorAll('.seat');
+    seats.forEach(seat => {
+        if (!seat.classList.contains('booked')) {
+            seat.addEventListener('click', () => toggleSeat(seat));
         }
-    }
+    });
 
     function toggleSeat(seat) {
         const id = seat.dataset.id;
-        if (selectedSeats.includes(id)) {
-            selectedSeats = selectedSeats.filter(s => s !== id);
+        const label = seat.dataset.label;
+
+        if (selectedSeatIds.includes(id)) {
+            selectedSeatIds = selectedSeatIds.filter(s => s !== id);
+            selectedSeatLabels = selectedSeatLabels.filter(l => l !== label);
             seat.classList.remove('selected');
         } else {
-            selectedSeats.push(id);
+            selectedSeatIds.push(id);
+            selectedSeatLabels.push(label);
             seat.classList.add('selected');
         }
         updateUI();
     }
 
     function updateUI() {
-        if (selectedSeats.length > 0) {
-            selectedDisplay.textContent = selectedSeats.join(', ');
-            const total = selectedSeats.length * ticketPrice;
+        if (selectedSeatIds.length > 0) {
+            selectedDisplay.textContent = selectedSeatLabels.join(', ');
+            const total = selectedSeatIds.length * ticketPrice;
             costDisplay.textContent = `$${total.toFixed(2)}`;
-            input.value = selectedSeats.join(',');
+            input.value = selectedSeatIds.join(',');
             if (bookBtn) bookBtn.disabled = false;
         } else {
             selectedDisplay.textContent = '-';

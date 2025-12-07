@@ -28,9 +28,9 @@ def register(request):
         user.role = role
         user.save()
 
-        login(request, user)
-        messages.success(request, f'Welcome, {username}!')
-        return redirect('dashboard_dispatch')
+        # login(request, user)  <-- Removed automatic login
+        messages.success(request, f'Account created for {username}. Please wait for admin approval.')
+        return redirect('login')
     
     return render(request, 'auth/register.html')
 
@@ -39,6 +39,9 @@ def login_view(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            if not user.is_approved:
+                messages.error(request, 'Your account is pending admin approval.')
+                return redirect('login')
             login(request, user)
             return redirect('dashboard_dispatch')
         else:
@@ -66,79 +69,112 @@ def dashboard_dispatch(request):
 
 def home(request):
     query = request.GET.get('q')
-    events = Event.objects.filter(date__gte=timezone.now().date())
+    events = Event.objects.filter(date__gte=timezone.now().date(), status='APPROVED')
     
     if query:
         events = events.filter(title__icontains=query)
         
-    events = events.order_by('date')
+    events = events.order_by('date', 'time')
     return render(request, 'public/home.html', {'events': events, 'query': query})
 
 def event_detail(request, event_id):
     event = Event.objects.get(pk=event_id)
     
-    # Get all booked seats for this event
+    # Get all booked seat locations
     bookings = Booking.objects.filter(event=event, booking_status='CONFIRMED')
-    booked_seats = []
-    for booking in bookings:
-        if booking.seats_booked:
-            booked_seats.extend(booking.seats_booked.split(','))
+    booked_seats_set = set()
+    for b in bookings:
+        if b.seats_booked:
+            for s in b.seats_booked.split(','):
+                booked_seats_set.add(s.strip())
+
+    # Generate grid
+    # Rows: 'A', 'B', 'C'... 
+    # Cols: 1, 2, 3...
+    
+    grid_rows = []
+    import string
+    row_labels = list(string.ascii_uppercase) # A-Z
+    
+    # Handle case where rows might exceed 26 (AA, AB etc if needed, but for now simple A-Z)
+    
+    for r in range(event.venue_rows):
+        row_char = row_labels[r] if r < 26 else f"R{r+1}"
+        row_seats = []
+        for c in range(1, event.venue_cols + 1):
+            seat_id = f"{row_char}{c}"
+            row_seats.append({
+                'seat_id': seat_id,
+                'row': row_char,
+                'col': c,
+                'is_booked': seat_id in booked_seats_set
+            })
+        grid_rows.append(row_seats)
     
     context = {
         'event': event,
-        'booked_seats': json.dumps(booked_seats), # Pass as JSON for JS
-        'rows': range(1, event.venue_rows + 1),
-        'cols': range(1, event.venue_cols + 1),
+        'grid_rows': grid_rows,
+        'booked_seat_ids': list(booked_seats_set), 
     }
     return render(request, 'public/event_detail.html', context)
 
+@login_required
 @login_required
 def book_ticket(request, event_id):
     if request.method == 'POST':
         from django.db import transaction
         
         event = Event.objects.get(pk=event_id)
-        selected_seats = request.POST.get('selected_seats') # e.g., "A1,A2"
+        selected_seat_ids = request.POST.get('selected_seats') # e.g., "A1,A2"
         
-        if not selected_seats:
+        if not selected_seat_ids:
             messages.error(request, 'No seats selected.')
             return redirect('event_detail', event_id=event.id)
         
-        seat_list = selected_seats.split(',')
+        seat_list = [s.strip() for s in selected_seat_ids.split(',')]
         quantity = len(seat_list)
         
         try:
             with transaction.atomic():
-                # Lock the event row for update to prevent race conditions
-                # (Optional but good practice: Event.objects.select_for_update().get(pk=event_id))
+                # Lock the event row to prevent race conditions (optional but good)
+                Event.objects.select_for_update().get(pk=event_id)
                 
-                # Concurrency Check: Verify if seats are still available
-                # We fetch ALL confirmed bookings for this event inside the transaction
-                bookings = Booking.objects.select_for_update().filter(event=event, booking_status='CONFIRMED')
-                all_booked = []
-                for b in bookings:
+                # Check availability
+                # Get all currently booked seats for this event
+                existing_bookings = Booking.objects.filter(
+                    event=event,
+                    booking_status='CONFIRMED'
+                ).select_for_update()
+                
+                booked_seats_set = set()
+                for b in existing_bookings:
                     if b.seats_booked:
-                        all_booked.extend(b.seats_booked.split(','))
+                        for s in b.seats_booked.split(','):
+                            booked_seats_set.add(s.strip())
                 
+                # Check for overlap
                 for seat in seat_list:
-                    if seat in all_booked:
-                        raise ValueError(f'Seat {seat} was just booked by someone else.')
+                    if seat in booked_seats_set:
+                        raise ValueError(f'Seat {seat} is already booked.')
                 
                 # Create Booking
                 total_cost = event.price * quantity
                 Booking.objects.create(
                     event=event,
                     user=request.user,
-                    seats_booked=selected_seats,
                     total_cost=total_cost,
-                    booking_status='CONFIRMED'
+                    booking_status='CONFIRMED',
+                    seats_booked=selected_seat_ids
                 )
                 
-            messages.success(request, f'Booking confirmed! Tickets: {selected_seats}')
+            messages.success(request, f'Booking confirmed! {quantity} tickets.')
             return redirect('my_tickets')
             
         except ValueError as e:
             messages.error(request, str(e))
+            return redirect('event_detail', event_id=event.id)
+        except Exception as e:
+            messages.error(request, f"An error occurred: {e}")
             return redirect('event_detail', event_id=event.id)
     
     return redirect('home')
@@ -155,15 +191,17 @@ def admin_dashboard(request):
         return redirect('home')
     
     total_users = User.objects.count()
-    active_events = Event.objects.count()
+    active_events = Event.objects.filter(status='APPROVED').count()
     total_bookings = Booking.objects.count()
     pending_hosts = User.objects.filter(role='HOST', is_approved=False).count()
+    pending_events_count = Event.objects.filter(status='PENDING').count()
     
     context = {
         'total_users': total_users,
         'active_events': active_events,
         'total_bookings': total_bookings,
         'pending_hosts': pending_hosts,
+        'pending_events_count': pending_events_count,
     }
     return render(request, 'admin/dashboard.html', context)
 
@@ -197,25 +235,49 @@ def reject_host(request, user_id):
     return redirect('host_list')
 
 @login_required
+def admin_pending_events(request):
+    if request.user.role != 'ADMIN':
+        return redirect('home')
+    
+    events = Event.objects.filter(status='PENDING').order_by('date')
+    return render(request, 'admin/pending_events.html', {'events': events})
+
+@login_required
+def approve_event(request, event_id):
+    if request.user.role != 'ADMIN':
+        return redirect('home')
+    
+    event = Event.objects.get(pk=event_id)
+    event.status = 'APPROVED'
+    event.save()
+    messages.success(request, f'Event "{event.title}" approved.')
+    return redirect('admin_pending_events')
+
+@login_required
+def reject_event(request, event_id):
+    if request.user.role != 'ADMIN':
+        return redirect('home')
+    
+    event = Event.objects.get(pk=event_id)
+    event.delete()
+    messages.success(request, f'Event "{event.title}" rejected.')
+    return redirect('admin_pending_events')
+
+@login_required
 def admin_event_list(request):
     if request.user.role != 'ADMIN':
         return redirect('home')
     
-    # Optimized Query: Fetch everything in one go
-    from django.db.models import Sum, Count, F, Case, When, IntegerField
+    from django.db.models import Sum, Count
     
     events = Event.objects.annotate(
         revenue=Sum('bookings__total_cost', default=0),
-        confirmed_bookings=Count('bookings', filter=models.Q(bookings__booking_status='CONFIRMED'))
-    ).order_by('-date')
+        confirmed_bookings_count=Count('bookings', filter=models.Q(bookings__booking_status='CONFIRMED'))
+    ).order_by('-date', '-time')
     
     event_stats = []
     for event in events:
-        # We still need to parse the seat strings for exact seat count, 
-        # but revenue is now pre-calculated by DB.
-        # For a truly massive scale, we'd store seat_count in Booking model,
-        # but this is a huge improvement already.
-        
+        # Calculate booked seats count by parsing CSV strings
         bookings = Booking.objects.filter(event=event, booking_status='CONFIRMED')
         booked_count = 0
         for b in bookings:
@@ -227,7 +289,7 @@ def admin_event_list(request):
         
         event_stats.append({
             'event': event,
-            'revenue': event.revenue, # From annotation
+            'revenue': event.revenue,
             'total_capacity': total_capacity,
             'balance_seats': balance_seats,
             'booked_count': booked_count
@@ -240,6 +302,7 @@ def host_dashboard(request):
     if request.user.role != 'HOST':
         return redirect('home')
     
+    # Events where the user is the host
     events = Event.objects.filter(host=request.user)
     return render(request, 'host/dashboard.html', {'events': events})
 
@@ -256,9 +319,9 @@ def create_event(request):
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
-            event.host = request.user
+            event.host = request.user  # Assign the current user as host
             event.save()
-            messages.success(request, 'Event created successfully!')
+            messages.success(request, 'Event created! It is pending admin approval.')
             return redirect('host_dashboard')
     else:
         form = EventForm()
@@ -276,24 +339,41 @@ def host_event_detail(request, event_id):
     
     total_revenue = sum(b.total_cost for b in bookings)
     
-    booked_seats = []
+    booked_seats_set = set()
     for b in bookings:
         if b.seats_booked:
-            booked_seats.extend(b.seats_booked.split(','))
-            
-    seats_sold_count = len(booked_seats)
+            for s in b.seats_booked.split(','):
+                booked_seats_set.add(s.strip())
+                
+    seats_sold_count = len(booked_seats_set)
     total_capacity = event.venue_rows * event.venue_cols
     balance_seats = total_capacity - seats_sold_count
     
+    # Generate grid
+    import string
+    row_labels = list(string.ascii_uppercase)
+    
+    grid_rows = []
+    for r in range(event.venue_rows):
+        row_char = row_labels[r] if r < 26 else f"R{r+1}"
+        row_seats = []
+        for c in range(1, event.venue_cols + 1):
+            seat_id = f"{row_char}{c}"
+            row_seats.append({
+                'seat_id': seat_id,
+                'row': row_char,
+                'col': c,
+                'is_booked': seat_id in booked_seats_set
+            })
+        grid_rows.append(row_seats)
+
     context = {
         'event': event,
         'total_revenue': total_revenue,
         'seats_sold_count': seats_sold_count,
         'balance_seats': balance_seats,
         'total_capacity': total_capacity,
-        'booked_seats': json.dumps(booked_seats),
-        'rows': range(1, event.venue_rows + 1),
-        'cols': range(1, event.venue_cols + 1),
+        'grid_rows': grid_rows,
     }
     return render(request, 'host/event_detail.html', context)
 

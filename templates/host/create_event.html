@@ -2,6 +2,21 @@
 
 {% block title %}Create Event{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+    #map {
+        height: 300px;
+        width: 100%;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="card" style="max-width: 600px; margin: 2rem auto;">
     <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Create New Event</h2>
@@ -16,6 +31,17 @@
         <div class="form-group">
             <label for="id_description">Description</label>
             {{ form.description }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="id_venue_rows">Venue Rows (A, B, C...)</label>
+                {{ form.venue_rows }}
+            </div>
+            <div class="form-group">
+                <label for="id_venue_cols">Venue Columns (1, 2, 3...)</label>
+                {{ form.venue_cols }}
+            </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -39,23 +65,40 @@
             {{ form.image_url }}
         </div>
 
-        <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid #333; padding-bottom: 0.5rem;">
-            Seating Layout</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-                <label for="id_venue_rows">Rows</label>
-                {{ form.venue_rows }}
-            </div>
-            <div class="form-group">
-                <label for="id_venue_cols">Columns</label>
-                {{ form.venue_cols }}
-            </div>
+        <div class="form-group">
+            <label>Event Location (Click map to select)</label>
+            <div id="map"></div>
+            {{ form.location_lat }}
+            {{ form.location_lng }}
         </div>
-        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-            Total Capacity will be calculated as Rows × Columns.
-        </p>
 
-        <button type="submit" class="btn" style="width: 100%;">Create Event</button>
+        <button type="submit" class="btn" style="width: 100%; margin-top: 1.5rem;">Create Event</button>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var map = L.map('map').setView([40.7128, -74.0060], 13); // Default to NYC, user should change
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                var marker;
+
+                map.on('click', function (e) {
+                    var lat = e.latlng.lat;
+                    var lng = e.latlng.lng;
+
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+
+                    marker = L.marker([lat, lng]).addTo(map);
+
+                    document.getElementById('id_location_lat').value = lat.toFixed(8);
+                    document.getElementById('id_location_lng').value = lng.toFixed(8);
+                });
+            });
+        </script>
     </form>
 </div>
 {% endblock %}
