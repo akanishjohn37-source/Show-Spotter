@@ -30,19 +30,7 @@
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <td style="padding: 1rem; font-weight: bold;">{{ item.event.title }}</td>
                 <td style="padding: 1rem;">{{ item.event.host.username }}</td>
-                <td style="padding: 1rem;">{{ item.event.date }}</td>
-                <td style="padding: 1rem; color: var(--accent);">${{ item.revenue }}</td>
-                <td style="padding: 1rem;">{{ item.total_capacity }}</td>
-                <td style="padding: 1rem;">{{ item.booked_count }}</td>
-                <td style="padding: 1rem; font-weight: bold;">{{ item.balance_seats }}</td>
-                <td style="padding: 1rem;">
-                    <form action="{% url 'delete_event' item.event.id %}" method="post"
-                        onsubmit="return confirm('Are you sure you want to delete this event? This cannot be undone.');"
-                        style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn"
-                            style="background-color: #ff4444; padding: 0.5rem 1rem; font-size: 0.8rem;">Delete</button>
-                    </form>
+                </form>
                 </td>
             </tr>
             {% endfor %}

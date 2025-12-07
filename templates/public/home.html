@@ -27,11 +27,15 @@
         {% endif %}
         <h3 style="margin-bottom: 0.5rem;">{{ event.title }}</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">{{ event.date|date:"M d, Y" }} • {{
-            event.time }}</p>
+            event.time|time:"H:i" }}</p>
         <p style="margin-bottom: 1.5rem;">{{ event.description|truncatewords:15 }}</p>
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: bold; font-size: 1.2rem; color: var(--accent);">${{ event.price }}</span>
-            <a href="{% url 'event_detail' event.id %}" class="btn">View Details</a>
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'event_detail' event.id %}#location-section" class="btn"
+                    style="background: transparent; border: 1px solid var(--text-muted); font-size: 0.8rem; padding: 0.5rem;">Location</a>
+                <a href="{% url 'event_detail' event.id %}" class="btn">View Details</a>
+            </div>
         </div>
     </div>
     {% endfor %}

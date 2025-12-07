@@ -12,7 +12,12 @@
         <div
             style="border: 1px solid #333; padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h3 style="margin: 0 0 0.5rem 0;">{{ event.title }}</h3>
+                <h3 style="margin: 0 0 0.5rem 0;">
+                    <a href="{% url 'event_detail' event.id %}"
+                        style="color: inherit; text-decoration: none; border-bottom: 1px dashed var(--text-muted);">
+                        {{ event.title }} &nearr;
+                    </a>
+                </h3>
                 <p style="margin: 0; color: var(--text-muted);">Host: {{ event.host.username }} | Date: {{ event.date }}
                 </p>
                 <p style="margin: 0.5rem 0 0 0;">{{ event.description|truncatechars:100 }}</p>

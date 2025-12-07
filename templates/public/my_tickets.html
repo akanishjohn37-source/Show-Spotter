@@ -11,7 +11,8 @@
     <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
             <h3 style="margin-bottom: 0.5rem;">{{ booking.event.title }}</h3>
-            <p style="color: var(--text-muted);">{{ booking.event.date|date:"M d, Y" }} at {{ booking.event.time }}</p>
+            <p style="color: var(--text-muted);">{{ booking.event.date|date:"M d, Y" }} at {{
+                booking.event.time|time:"H:i" }}</p>
             <p style="margin-top: 0.5rem;">
                 <strong>Seats:</strong> <span style="color: var(--accent);">{{ booking.seats_booked }}</span>
             </p>
@@ -22,6 +23,12 @@
                 style="background: rgba(0, 230, 118, 0.1); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--accent);">
                 {{ booking.booking_status }}
             </span>
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'event_detail' booking.event.id %}#location-section" class="btn"
+                    style="background: transparent; border: 1px solid var(--text-muted); font-size: 0.8rem; padding: 0.2rem 0.6rem;">
+                    Location
+                </a>
+            </div>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">ID: #{{ booking.id }}</p>
         </div>
     </div>

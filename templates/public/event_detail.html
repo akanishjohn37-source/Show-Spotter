@@ -9,16 +9,30 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
     #map {
-        height: 250px;
+        height: 350px;
         width: 100%;
         border-radius: 8px;
         margin-top: 1rem;
     }
 </style>
+<script>
+    // Fix Leaflet's default icon path issues
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof L !== 'undefined') {
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            });
+        }
+    });
+</script>
 {% endblock %}
 
 {% block content %}
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start;">
+    <!-- Left Column: Event Info & Map -->
     <div>
         {% if event.image_url %}
         <img src="{{ event.image_url }}" alt="{{ event.title }}"
@@ -29,30 +43,54 @@
 
         <div class="card">
             <h3 style="margin-bottom: 1rem;">Event Details</h3>
-            <p><strong>Date:</strong> {{ event.start_time|date:"F d, Y" }}</p>
-            <p><strong>Time:</strong> {{ event.start_time|date:"H:i" }} - {{ event.end_time|date:"H:i" }}</p>
-            <p><strong>Host:</strong> {{ event.auditorium.host.username }}</p>
+            <p><strong>Date:</strong> {{ event.date|date:"F d, Y" }}</p>
+            <p><strong>Time:</strong> {{ event.time|time:"H:i" }}</p>
+            <p><strong>Host:</strong> {{ event.host.username }}</p>
             <p><strong>Price:</strong> ${{ event.price }} / ticket</p>
-            {% if event.location_lat and event.location_lng %}
-            <div id="map"></div>
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    var lat = {{ event.location_lat }
-                };
-                var lng = {{ event.location_lng }};
-                var map = L.map('map').setView([lat, lng], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-                L.marker([lat, lng]).addTo(map).bindPopup("{{ event.title }}").openPopup();
-                    });
-            </script>
-            {% else %}
-            <p><em>No location map available.</em></p>
+
+            {% if user.role == 'ADMIN' %}
+            <div style="margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--accent); border-radius: 8px;">
+                <h4 style="margin-top: 0; color: var(--accent);">Admin Controls</h4>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    {% if event.status == 'PENDING' %}
+                    <a href="{% url 'approve_event' event.id %}" class="btn"
+                        style="background: var(--success); font-size: 0.9rem;">Approve</a>
+                    <a href="{% url 'reject_event' event.id %}" class="btn"
+                        style="background: var(--danger); font-size: 0.9rem;">Reject</a>
+                    {% endif %}
+                    <a href="{% url 'delete_event' event.id %}" class="btn" style="background: #333; font-size: 0.9rem;"
+                        onclick="return confirm('Delete this event?');">Delete</a>
+                </div>
+            </div>
             {% endif %}
+
+            <div id="location-section" style="scroll-margin-top: 100px;">
+                <h3 style="margin-top: 1.5rem;">Location</h3>
+                {% if event.location_lat and event.location_lng %}
+                <div id="map"></div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var lat = {{ event.location_lat }
+                    };
+                    var lng = {{ event.location_lng }};
+                    var map = L.map('map').setView([lat, lng], 15);
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    }).addTo(map);
+                    L.marker([lat, lng]).addTo(map).bindPopup("<b>{{ event.title }}</b><br>Event Location").openPopup();
+                    });
+                </script>
+                {% else %}
+                <p
+                    style="color: var(--text-muted); padding: 1rem; border: 1px dashed #444; border-radius: 8px; text-align: center;">
+                    Location details not available for this event.
+                </p>
+                {% endif %}
+            </div>
         </div>
     </div>
 
+    <!-- Right Column: Booking -->
     <div class="card">
         <h2 style="margin-bottom: 1.5rem; text-align: center;">Select Your Seats</h2>
 

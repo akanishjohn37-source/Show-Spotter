@@ -52,7 +52,7 @@ class Command(BaseCommand):
                 'location_lat': 40.7128,
                 'location_lng': -74.0060,
                 'status': 'APPROVED',
-                'image_url': 'https://via.placeholder.com/800x400'
+                'image_url': '/static/images/event_placeholder.png'
             }
         )
         if created:
