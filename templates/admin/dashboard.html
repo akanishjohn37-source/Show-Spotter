@@ -10,14 +10,15 @@
     <div class="card" style="text-align: center;">
         <h3 style="color: var(--text-muted);">Total Users</h3>
         <p style="font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0;">{{ total_users }}</p>
+        <a href="{% url 'user_list' %}" class="btn-text" style="font-size: 0.9rem;">View All</a>
     </div>
     <div class="card" style="text-align: center;">
         <h3 style="color: var(--text-muted);">Active Events</h3>
         <p style="font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0;">{{ active_events }}</p>
-        <a href="{% url 'admin_event_list' %}" class="btn-text" style="font-size: 0.9rem;">View Details</a>
+        <a href="{% url 'admin_event_list' %}" class="btn-text" style="font-size: 0.9rem;">Manage</a>
     </div>
     <div class="card" style="text-align: center;">
-        <h3 style="color: var(--text-muted);">Total Bookings</h3>
+        <h3 style="color: var(--text-muted);">Confirmed Bookings</h3>
         <p style="font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0;">{{ total_bookings }}</p>
     </div>
     <div class="card"
@@ -30,11 +31,12 @@
         {% endif %}
     </div>
     <div class="card"
-        style="text-align: center; border-color: {% if pending_hosts > 0 %}var(--accent){% else %}transparent{% endif %};">
-        <h3 style="color: var(--text-muted);">Pending Hosts</h3>
-        <p style="font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0;">{{ pending_hosts }}</p>
-        {% if pending_hosts > 0 %}
-        <a href="{% url 'host_list' %}" class="btn" style="display: inline-block; margin-top: 1rem;">Review Queue</a>
+        style="text-align: center; border-color: {% if pending_users_count > 0 %}var(--accent){% else %}transparent{% endif %};">
+        <h3 style="color: var(--text-muted);">Pending Approvals</h3>
+        <p style="font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0;">{{ pending_users_count }}</p>
+        {% if pending_users_count > 0 %}
+        <a href="{% url 'pending_users' %}" class="btn" style="display: inline-block; margin-top: 1rem;">Review
+            Queue</a>
         {% endif %}
     </div>
 </div>

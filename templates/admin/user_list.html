@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}All Users{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; color: var(--primary);">All Users</h2>
+        <span style="font-size: 1.2rem; background: #333; padding: 0.5rem 1rem; border-radius: 20px;">
+            Total: {{ users.count }}
+        </span>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="text-align: left; border-bottom: 2px solid #333;">
+                <th style="padding: 1rem;">User</th>
+                <th style="padding: 1rem;">Role</th>
+                <th style="padding: 1rem;">Status</th>
+                <th style="padding: 1rem;">Joined</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr style="border-bottom: 1px solid #222;">
+                <td style="padding: 1rem;">
+                    <strong>{{ user.username }}</strong><br>
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">{{ user.email }}</span>
+                </td>
+                <td style="padding: 1rem;">{{ user.get_role_display }}</td>
+                <td style="padding: 1rem;">
+                    {% if user.is_approved %}
+                    <span style="color: var(--success);">Active</span>
+                    {% else %}
+                    <span style="color: var(--accent);">Pending</span>
+                    <a href="{% url 'pending_users' %}"
+                        style="margin-left: 0.5rem; font-size: 0.8rem; text-decoration: underline;">Review</a>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem;">{{ user.date_joined|date:"M d, Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 2rem;">
+        <a href="{% url 'admin_dashboard' %}" class="btn" style="background: var(--text-muted);">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

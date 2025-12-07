@@ -193,46 +193,62 @@ def admin_dashboard(request):
     total_users = User.objects.count()
     active_events = Event.objects.filter(status='APPROVED').count()
     total_bookings = Booking.objects.count()
-    pending_hosts = User.objects.filter(role='HOST', is_approved=False).count()
+    pending_users_count = User.objects.filter(is_approved=False).count()
     pending_events_count = Event.objects.filter(status='PENDING').count()
     
     context = {
         'total_users': total_users,
         'active_events': active_events,
         'total_bookings': total_bookings,
-        'pending_hosts': pending_hosts,
+        'pending_users_count': pending_users_count,
         'pending_events_count': pending_events_count,
     }
     return render(request, 'admin/dashboard.html', context)
+
+@login_required
+def user_list(request):
+    if request.user.role != 'ADMIN':
+        return redirect('home')
+    
+    users = User.objects.all().order_by('-date_joined')
+    return render(request, 'admin/user_list.html', {'users': users})
 
 @login_required
 def host_list(request):
     if request.user.role != 'ADMIN':
         return redirect('home')
     
-    hosts = User.objects.filter(role='HOST', is_approved=False)
+    hosts = User.objects.filter(role='HOST').order_by('-date_joined')
     return render(request, 'admin/host_list.html', {'hosts': hosts})
 
 @login_required
-def approve_host(request, user_id):
+def pending_users(request):
+    if request.user.role != 'ADMIN':
+        return redirect('home')
+    
+    users = User.objects.filter(is_approved=False).order_by('date_joined')
+    return render(request, 'admin/pending_users.html', {'users': users})
+
+@login_required
+def approve_user(request, user_id):
     if request.user.role != 'ADMIN':
         return redirect('home')
     
     user = User.objects.get(pk=user_id)
     user.is_approved = True
     user.save()
-    messages.success(request, f'Host {user.username} approved.')
-    return redirect('host_list')
+    messages.success(request, f'User {user.username} approved.')
+    return redirect('pending_users')
 
 @login_required
-def reject_host(request, user_id):
+def reject_user(request, user_id):
     if request.user.role != 'ADMIN':
         return redirect('home')
     
     user = User.objects.get(pk=user_id)
     user.delete()
-    messages.success(request, f'Host {user.username} rejected and removed.')
-    return redirect('host_list')
+    messages.success(request, f'User {user.username} rejected and removed.')
+    return redirect('pending_users')
 
 @login_required
 def admin_pending_events(request):

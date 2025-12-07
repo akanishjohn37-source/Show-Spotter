@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Pending Approvals{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Pending Account Approvals</h2>
+
+    {% if users %}
+    <div style="display: grid; gap: 1rem;">
+        {% for user in users %}
+        <div
+            style="border: 1px solid #333; padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="margin: 0 0 0.5rem 0;">{{ user.username }}</h3>
+                <p style="margin: 0; color: var(--text-muted);">Role: {{ user.get_role_display }} | Email: {{ user.email
+                    }}</p>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem;">Joined: {{ user.date_joined|date:"M d, Y" }}</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'approve_user' user.id %}" class="btn" style="background: var(--success);">Approve</a>
+                <a href="{% url 'reject_user' user.id %}" class="btn" style="background: var(--danger);">Reject</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No pending accounts.</p>
+    {% endif %}
+
+    <div style="margin-top: 2rem;">
+        <a href="{% url 'admin_dashboard' %}" class="btn" style="background: var(--text-muted);">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

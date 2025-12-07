@@ -34,39 +34,24 @@ class Command(BaseCommand):
             public_user.save()
             self.stdout.write('Created Public user')
 
-        # Create Auditorium
-        auditorium, created = Auditorium.objects.get_or_create(
-            name='Main Hall',
-            host=host_user,
-            defaults={
-                'location': 'Downtown',
-                'total_rows': 5,
-                'total_cols': 10
-            }
-        )
-        if created:
-            self.stdout.write(f'Created Auditorium: {auditorium.name}')
-            # Create Seats
-            seats = []
-            for r in range(1, auditorium.total_rows + 1):
-                row_letter = chr(64 + r) # A, B, C...
-                for c in range(1, auditorium.total_cols + 1):
-                    seats.append(Seat(auditorium=auditorium, row_letter=row_letter, col_number=c))
-            Seat.objects.bulk_create(seats)
-            self.stdout.write(f'Created {len(seats)} seats for {auditorium.name}')
-
         # Create Event
-        start_time = timezone.now() + timedelta(days=1)
-        end_time = start_time + timedelta(hours=3)
+        import datetime
+        event_date = timezone.now().date() + datetime.timedelta(days=1)
+        event_time = datetime.time(19, 0) # 7 PM
         
         event, created = Event.objects.get_or_create(
             title='Rock Concert',
-            auditorium=auditorium,
+            host=host_user,
             defaults={
                 'description': 'A live rock concert featuring top bands.',
-                'start_time': start_time,
-                'end_time': end_time,
+                'date': event_date,
+                'time': event_time,
                 'price': 50.00,
+                'venue_rows': 5,
+                'venue_cols': 10,
+                'location_lat': 40.7128,
+                'location_lng': -74.0060,
+                'status': 'APPROVED',
                 'image_url': 'https://via.placeholder.com/800x400'
             }
         )

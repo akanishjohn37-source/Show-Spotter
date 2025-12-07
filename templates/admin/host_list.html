@@ -6,22 +6,35 @@
 <h1 style="margin-bottom: 2rem;">Pending Host Approvals</h1>
 
 {% if hosts %}
-<div style="display: grid; gap: 1rem;">
-    {% for host in hosts %}
-    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h3 style="margin: 0;">{{ host.username }}</h3>
-            <p style="color: var(--text-muted); margin: 0;">{{ host.email }}</p>
-            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Joined: {{ host.date_joined|date:"M d, Y" }}</p>
-        </div>
-        <div style="display: flex; gap: 1rem;">
-            <a href="{% url 'approve_host' host.id %}" class="btn"
-                style="background: var(--accent); color: black;">Approve</a>
-            <a href="{% url 'reject_host' host.id %}" class="btn" style="background: var(--danger);">Reject</a>
-        </div>
-    </div>
-    {% endfor %}
-</div>
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="text-align: left; border-bottom: 2px solid #333;">
+            <th style="padding: 1rem;">Host</th>
+            <th style="padding: 1rem;">Status</th>
+            <th style="padding: 1rem;">Events</th>
+            <th style="padding: 1rem;">Joined</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for host in hosts %}
+        <tr style="border-bottom: 1px solid #222;">
+            <td style="padding: 1rem;">
+                <strong>{{ host.username }}</strong><br>
+                <span style="color: var(--text-muted); font-size: 0.9rem;">{{ host.email }}</span>
+            </td>
+            <td style="padding: 1rem;">
+                {% if host.is_approved %}
+                <span style="color: var(--success);">Active</span>
+                {% else %}
+                <span style="color: var(--accent);">Pending</span>
+                {% endif %}
+            </td>
+            <td style="padding: 1rem;">{{ host.events.count }}</td>
+            <td style="padding: 1rem;">{{ host.date_joined|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% else %}
 <div class="card" style="text-align: center; padding: 3rem;">
     <p style="color: var(--text-muted); font-size: 1.2rem;">No pending host requests.</p>
