@@ -65,9 +65,12 @@ def dashboard_dispatch(request):
             return redirect('login')
         return redirect('host_dashboard')
     else:
-        return redirect('home')
+        return redirect('browse_events')
 
-def home(request):
+def landing(request):
+    return render(request, 'index.html')
+
+def browse_events(request):
     query = request.GET.get('q')
     events = Event.objects.filter(date__gte=timezone.now().date(), status='APPROVED')
     
@@ -177,7 +180,7 @@ def book_ticket(request, event_id):
             messages.error(request, f"An error occurred: {e}")
             return redirect('event_detail', event_id=event.id)
     
-    return redirect('home')
+    return redirect('browse_events')
 
 @login_required
 def my_tickets(request):
@@ -188,7 +191,7 @@ def my_tickets(request):
 @login_required
 def admin_dashboard(request):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     total_users = User.objects.count()
     active_events = Event.objects.filter(status='APPROVED').count()
@@ -208,7 +211,7 @@ def admin_dashboard(request):
 @login_required
 def user_list(request):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     users = User.objects.all().order_by('-date_joined')
     return render(request, 'admin/user_list.html', {'users': users})
@@ -216,7 +219,7 @@ def user_list(request):
 @login_required
 def host_list(request):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     hosts = User.objects.filter(role='HOST').order_by('-date_joined')
     return render(request, 'admin/host_list.html', {'hosts': hosts})
@@ -224,7 +227,7 @@ def host_list(request):
 @login_required
 def pending_users(request):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     users = User.objects.filter(is_approved=False).order_by('date_joined')
     return render(request, 'admin/pending_users.html', {'users': users})
@@ -232,7 +235,7 @@ def pending_users(request):
 @login_required
 def approve_user(request, user_id):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     user = User.objects.get(pk=user_id)
     user.is_approved = True
@@ -243,7 +246,7 @@ def approve_user(request, user_id):
 @login_required
 def reject_user(request, user_id):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     user = User.objects.get(pk=user_id)
     user.delete()
@@ -253,7 +256,7 @@ def reject_user(request, user_id):
 @login_required
 def admin_pending_events(request):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     events = Event.objects.filter(status='PENDING').order_by('date')
     return render(request, 'admin/pending_events.html', {'events': events})
@@ -261,7 +264,7 @@ def admin_pending_events(request):
 @login_required
 def approve_event(request, event_id):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     event = Event.objects.get(pk=event_id)
     event.status = 'APPROVED'
@@ -272,7 +275,7 @@ def approve_event(request, event_id):
 @login_required
 def reject_event(request, event_id):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     event = Event.objects.get(pk=event_id)
     event.delete()
@@ -282,7 +285,7 @@ def reject_event(request, event_id):
 @login_required
 def admin_event_list(request):
     if request.user.role != 'ADMIN':
-        return redirect('home')
+        return redirect('browse_events')
     
     from django.db.models import Sum, Count
     
@@ -316,7 +319,7 @@ def admin_event_list(request):
 @login_required
 def host_dashboard(request):
     if request.user.role != 'HOST':
-        return redirect('home')
+        return redirect('browse_events')
     
     # Events where the user is the host
     events = Event.objects.filter(host=request.user)
@@ -325,7 +328,7 @@ def host_dashboard(request):
 @login_required
 def create_event(request):
     if request.user.role != 'HOST':
-        return redirect('home')
+        return redirect('browse_events')
     
     if not request.user.is_approved:
         messages.error(request, 'You are not approved to create events yet.')
@@ -398,7 +401,7 @@ def host_event_detail(request, event_id):
 def delete_event(request, event_id):
     if request.user.role != 'ADMIN':
         messages.error(request, 'Unauthorized action.')
-        return redirect('home')
+        return redirect('browse_events')
     
     event = Event.objects.get(pk=event_id)
     event.delete()

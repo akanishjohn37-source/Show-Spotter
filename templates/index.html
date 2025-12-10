@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show Spotter - Book Your Next Experience</title>
+    <!-- Link to the existing CSS file -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Additional styles for the landing page specifically */
+        .landing-hero {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            text-align: center;
+            background: radial-gradient(circle at center, rgba(108, 99, 255, 0.1) 0%, rgba(18, 18, 18, 0) 70%);
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(108, 99, 255, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">Show Spotter</div>
+        <div class="nav-links">
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </div>
+    </nav>
+
+    <main class="container landing-hero">
+        <h1 class="hero-title">Discover Amazing Events</h1>
+        <p class="hero-subtitle">The easiest way to book seats for the best shows in town. Join us to experience
+            unforgettable moments.</p>
+
+        <a href="{% url 'login' %}" class="cta-button">Launch Application</a>
+
+        <div style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);">
+            (Note: This is a static landing page. Click above to access the full application.)
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Show Spotter. All rights reserved.</p>
+    </footer>
+</body>
+
+</html>
