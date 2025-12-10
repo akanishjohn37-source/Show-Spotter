@@ -3,10 +3,12 @@
 {% block title %}{{ event.title }}{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+    integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2y30d5Wb9ATCI38wh993B5PQ6d4n3B5gI1rM5OyaZw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"
+    integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
     #map {
         height: 350px;
@@ -64,82 +66,77 @@
             </div>
             {% endif %}
 
-            <div id="location-section" style="scroll-margin-top: 100px;">
-                <h3 style="margin-top: 1.5rem;">Location</h3>
-                {% if event.location_lat and event.location_lng %}
-                <div id="map"></div>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        var lat = {{ event.location_lat }
-                    };
-                    var lng = {{ event.location_lng }};
-                    var map = L.map('map').setView([lat, lng], 15);
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                    }).addTo(map);
-                    L.marker([lat, lng]).addTo(map).bindPopup("<b>{{ event.title }}</b><br>Event Location").openPopup();
-                    });
-                </script>
-                {% else %}
-                <p
-                    style="color: var(--text-muted); padding: 1rem; border: 1px dashed #444; border-radius: 8px; text-align: center;">
-                    Location details not available for this event.
-                </p>
-                {% endif %}
-            </div>
+            {% if event.location_lat and event.location_lng %}
+            <div id="map"></div>
+            <script>
+                var map = L.map('map').setView([{{ event.location_lat }}, { { event.location_lng } }], 13);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+                L.marker([{{ event.location_lat }}, {{ event.location_lng }}]).addTo(map)
+                    .bindPopup("<b>{{ event.title|escapejs }}</b>");
+            </script>
+            {% else %}
+            <p
+                style="color: var(--text-muted); padding: 1rem; border: 1px dashed #444; border-radius: 8px; text-align: center;">
+                Location details not available for this event.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Right Column: Booking -->
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; text-align: center;">Select Your Seats</h2>
+
+    <div class="seat-legend" style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="seat" style="width: 20px; height: 20px; cursor: default;"></div> Available
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="seat selected" style="width: 20px; height: 20px; cursor: default;"></div> Selected
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="seat booked" style="width: 20px; height: 20px; cursor: default;"></div> Booked
         </div>
     </div>
 
-    <!-- Right Column: Booking -->
-    <div class="card">
-        <h2 style="margin-bottom: 1.5rem; text-align: center;">Select Your Seats</h2>
-
-        <div class="seat-legend" style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div class="seat" style="width: 20px; height: 20px; cursor: default;"></div> Available
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div class="seat selected" style="width: 20px; height: 20px; cursor: default;"></div> Selected
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div class="seat booked" style="width: 20px; height: 20px; cursor: default;"></div> Booked
-            </div>
+    <div id="seat-grid" class="seat-grid" style="grid-template-columns: repeat({{ event.venue_cols }}, 40px);">
+        {% for row_items in grid_rows %}
+        {% for item in row_items %}
+        <div class="seat {% if item.is_booked %}booked{% endif %}" data-id="{{ item.seat_id }}"
+            data-label="{{ item.row }}{{ item.col }}" title="{{ item.row }}{{ item.col }}">
+            {{ item.row }}{{ item.col }}
         </div>
-
-        <div id="seat-grid" class="seat-grid" style="grid-template-columns: repeat({{ event.venue_cols }}, 40px);">
-            {% for row_items in grid_rows %}
-            {% for item in row_items %}
-            <div class="seat {% if item.is_booked %}booked{% endif %}" data-id="{{ item.seat_id }}"
-                data-label="{{ item.row }}{{ item.col }}" title="{{ item.row }}{{ item.col }}">
-                {{ item.row }}{{ item.col }}
-            </div>
-            {% endfor %}
-            {% endfor %}
-        </div>
-
-        <div style="margin-top: 2rem; border-top: 1px solid #333; padding-top: 1rem;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                <span>Selected Seats:</span>
-                <span id="selected-seats-display" style="font-weight: bold; color: var(--accent);">-</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
-                <span>Total Cost:</span>
-                <span id="total-cost-display" style="font-weight: bold; font-size: 1.2rem;">$0.00</span>
-            </div>
-
-            <form action="{% url 'book_ticket' event.id %}" method="post" id="booking-form">
-                {% csrf_token %}
-                <input type="hidden" name="selected_seats" id="selected_seats_input">
-                {% if user.is_authenticated %}
-                <button type="submit" class="btn" id="book-btn" style="width: 100%;" disabled>Book Tickets</button>
-                {% else %}
-                <a href="{% url 'login' %}?next={% url 'event_detail' event.id %}" class="btn"
-                    style="width: 100%; text-align: center; display: block; background: var(--text-muted);">Login to
-                    Book</a>
-                {% endif %}
-            </form>
-        </div>
+        {% endfor %}
+        {% endfor %}
     </div>
+
+    <div style="margin-top: 2rem; border-top: 1px solid #333; padding-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+            <span>Selected Seats:</span>
+            <span id="selected-seats-display" style="font-weight: bold; color: var(--accent);">-</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+            <span>Total Cost:</span>
+            <span id="total-cost-display" style="font-weight: bold; font-size: 1.2rem;">$0.00</span>
+        </div>
+
+        <form action="{% url 'book_ticket' event.id %}" method="post" id="booking-form">
+            {% csrf_token %}
+            <input type="hidden" name="selected_seats" id="selected_seats_input">
+            {% if user.is_authenticated %}
+            <button type="submit" class="btn" id="book-btn" style="width: 100%;" disabled>Book Tickets</button>
+            {% else %}
+            <a href="{% url 'login' %}?next={% url 'event_detail' event.id %}" class="btn"
+                style="width: 100%; text-align: center; display: block; background: var(--text-muted);">Login to
+                Book</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
 </div>
 
 <!-- Pass data to JS -->
