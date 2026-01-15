@@ -30,7 +30,15 @@
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <td style="padding: 1rem; font-weight: bold;">{{ item.event.title }}</td>
                 <td style="padding: 1rem;">{{ item.event.host.username }}</td>
-                </form>
+                <td style="padding: 1rem;">{{ item.event.date|date:"M d, Y" }}</td>
+                <td style="padding: 1rem;">${{ item.revenue }}</td>
+                <td style="padding: 1rem;">{{ item.total_capacity }}</td>
+                <td style="padding: 1rem;">{{ item.booked_count }}</td>
+                <td style="padding: 1rem;">{{ item.balance_seats }}</td>
+                <td style="padding: 1rem;">
+                    <a href="{% url 'delete_event' item.event.id %}" class="btn"
+                        style="background: var(--danger); font-size: 0.8rem; padding: 0.5rem;"
+                        onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
                 </td>
             </tr>
             {% endfor %}

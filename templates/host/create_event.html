@@ -4,11 +4,10 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
-    integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2y30d5Wb9ATCI38wh993B5PQ6d4n3B5gI1rM5OyaZw=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"
-    integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg=="
-    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <style>
     #map {
         height: 300px;
@@ -86,18 +85,28 @@
 
                 var marker;
 
-                map.on('click', function (e) {
-                    var lat = e.latlng.lat;
-                    var lng = e.latlng.lng;
+                // Add Geocoder
+                var geocoder = L.Control.geocoder({
+                    defaultMarkGeocode: false
+                })
+                    .on('markgeocode', function (e) {
+                        var latlng = e.geocode.center;
+                        updateLocation(latlng.lat, latlng.lng);
+                        map.fitBounds(e.geocode.bbox);
+                    })
+                    .addTo(map);
 
+                function updateLocation(lat, lng) {
                     if (marker) {
                         map.removeLayer(marker);
                     }
-
                     marker = L.marker([lat, lng]).addTo(map);
-
                     document.getElementById('id_location_lat').value = lat.toFixed(8);
                     document.getElementById('id_location_lng').value = lng.toFixed(8);
+                }
+
+                map.on('click', function (e) {
+                    updateLocation(e.latlng.lat, e.latlng.lng);
                 });
             });
         </script>

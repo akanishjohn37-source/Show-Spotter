@@ -13,6 +13,7 @@
             <th style="padding: 1rem;">Status</th>
             <th style="padding: 1rem;">Events</th>
             <th style="padding: 1rem;">Joined</th>
+            <th style="padding: 1rem;">Action</th>
         </tr>
     </thead>
     <tbody>
@@ -31,6 +32,11 @@
             </td>
             <td style="padding: 1rem;">{{ host.events.count }}</td>
             <td style="padding: 1rem;">{{ host.date_joined|date:"M d, Y" }}</td>
+            <td style="padding: 1rem;">
+                <a href="{% url 'delete_user_general' host.id %}" class="btn-text"
+                    style="color: var(--danger); font-size: 0.9rem;"
+                    onclick="return confirm('Delete this host?');">Delete</a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>

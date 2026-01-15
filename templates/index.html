@@ -78,6 +78,29 @@
         </div>
     </main>
 
+    {% if events %}
+    <section class="container" style="padding-bottom: 4rem;">
+        <h2 style="text-align: center; margin-bottom: 2rem; color: var(--text);">Upcoming Events</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            {% for event in events %}
+            <div class="card"
+                style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <h3 style="color: var(--primary);">{{ event.title }}</h3>
+                <p style="color: var(--text-muted);">{{ event.date|date:"M d" }} • {{ event.time|time:"H:i" }}</p>
+                <p>{{ event.description|truncatewords:10 }}</p>
+                <div style="margin-top: 1rem;">
+                    <a href="{% url 'event_detail' event.id %}" style="color: var(--accent); font-weight: bold;">View
+                        Details &rarr;</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="{% url 'browse_events' %}" class="btn-text" style="font-size: 1.1rem;">View All Events &rarr;</a>
+        </div>
+    </section>
+    {% endif %}
+
     <footer>
         <p>&copy; 2024 Show Spotter. All rights reserved.</p>
     </footer>

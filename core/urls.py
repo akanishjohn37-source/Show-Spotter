@@ -16,6 +16,7 @@ urlpatterns = [
     path('manage/users/pending/', views.pending_users, name='pending_users'),
     path('manage/approve/user/<int:user_id>/', views.approve_user, name='approve_user'),
     path('manage/reject/user/<int:user_id>/', views.reject_user, name='reject_user'),
+    path('manage/delete/user/<int:user_id>/', views.delete_user_general, name='delete_user_general'),
     path('manage/events/', views.admin_event_list, name='admin_event_list'),
     path('manage/events/pending/', views.admin_pending_events, name='admin_pending_events'),
     path('manage/events/<int:event_id>/approve/', views.approve_event, name='approve_event'),

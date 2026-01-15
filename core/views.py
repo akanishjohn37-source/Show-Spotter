@@ -68,7 +68,8 @@ def dashboard_dispatch(request):
         return redirect('browse_events')
 
 def landing(request):
-    return render(request, 'index.html')
+    events = Event.objects.filter(date__gte=timezone.now().date(), status='APPROVED').order_by('date', 'time')[:3]
+    return render(request, 'index.html', {'events': events})
 
 def browse_events(request):
     query = request.GET.get('q')
@@ -114,10 +115,13 @@ def event_detail(request, event_id):
             })
         grid_rows.append(row_seats)
     
+    is_past_event = event.date < timezone.now().date()
+    
     context = {
         'event': event,
         'grid_rows': grid_rows,
         'booked_seat_ids': list(booked_seats_set), 
+        'is_past_event': is_past_event,
     }
     return render(request, 'public/event_detail.html', context)
 
@@ -254,6 +258,21 @@ def reject_user(request, user_id):
     return redirect('pending_users')
 
 @login_required
+def delete_user_general(request, user_id):
+    if request.user.role != 'ADMIN':
+        return redirect('browse_events')
+    
+    user = User.objects.get(pk=user_id)
+    role = user.role
+    username = user.username
+    user.delete()
+    messages.success(request, f'User {username} deleted.')
+    
+    if role == 'HOST':
+        return redirect('host_list')
+    return redirect('user_list')
+
+@login_required
 def admin_pending_events(request):
     if request.user.role != 'ADMIN':
         return redirect('browse_events')
@@ -338,9 +357,10 @@ def create_event(request):
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
-            event.host = request.user  # Assign the current user as host
+            event.host = request.user
+            event.status = 'APPROVED' # Auto-approve for easier testing
             event.save()
-            messages.success(request, 'Event created! It is pending admin approval.')
+            messages.success(request, 'Event created and published!')
             return redirect('host_dashboard')
     else:
         form = EventForm()
